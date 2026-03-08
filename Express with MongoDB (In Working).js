@@ -9,17 +9,13 @@ app.use(express.json());
 
 const db_uri = process.env.MONGODB_URI;
 
-app.use('/get/:userID', (req, res, next) => {
-    
-});
-
 (
     async () => {
         try {
             await mongoose.connect(db_uri)
             .then(() => console.log("Connection Successful."))
             .catch((err) => {
-                console.log("Connection Error:\n\n", err);
+                console.log("Database Connection Error:\n\n", err);
                 process.exit();
             });
         } catch (err) {
@@ -34,11 +30,97 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
+ 
+app.use('/get', (req, res) => {
+    let user;
+    (
+        async () => {
+            await User.findOne({id: req.body.id})
+            .then(value => user = value)
+            .catch(err => console.log("Error with get from database: ", err));
 
-const creator = await User.create({
-    id:'1',
-    name:'Talha'
+            if (user != null){
+                res.send(`User Details: \n ${user}`);
+            }
+            else res.send("User with the requested id could not be located");
+            console.log(user);
+        }
+    )();
 });
 
-const users_list = await User.findOne({ id: 12345});
-console.log(users_list);
+
+
+
+
+app.use('/post', (req, res) => {
+    let user;
+    (
+        async () => {
+            await User.findOne({id: req.body.id})
+            .then(value => user = value)
+            .catch(err => console.log("Error with post from database: ", err));
+
+            if (user != null){
+                res.send(`Error! User Already Exists\n\nExisting User Details:\n${user}`);
+            }
+            else {
+                await User.create({id:req.body.id, name:req.body.name})
+                .then(() => res.send("User Successfully Created"))
+                .catch(err => {
+                    res.send("Error Incurred with User Creation");
+                    console.log("Error Incurred with User Creation", err);
+                });
+            }
+        }
+    )();
+});
+
+
+
+app.use('/put', (req, res) => {
+    let user;
+    (
+        async () => {
+            await User.findOne({id: req.body.id})
+            .then(value => user = value)
+            .catch(err => console.log("Error with put from database: ", err));
+
+            if (user != null){
+                res.send(`Error! User Already Exists\n\nExisting User Details:\n${user}`);
+            }
+            else {
+                await User.create({id:req.body.id, name:req.body.name})
+                .then(() => res.send("User Successfully Created"))
+                .catch(err => {
+                    res.send("Error Incurred with User Creation");
+                    console.log("Error Incurred with User Creation", err);
+                });
+            }
+        }
+    )();
+});
+
+
+
+
+app.use('/delete', (req, res) => {
+    let user;
+    (
+        async () => {
+            let delete_status;
+
+            await User.deleteOne({id: req.body.id})
+            .then(value => delete_status = value)
+            .catch(err => console.log("Error with get from database: ", err));
+
+            if (delete_status.acknowledged === true && delete_status.deletedCount != 0){
+                res.send("User Deleted Successfully");
+            }
+            else res.send("Error! No user with given ID found");
+        }
+    )();
+});
+
+app.listen(3000);
+
+
